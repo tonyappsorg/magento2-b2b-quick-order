@@ -1,0 +1,20 @@
+{
+  "name": "tonyapps/module-b2b-quick-order",
+  "description": "SKU and CSV quick ordering for Tonyapps B2B company accounts",
+  "type": "magento2-module",
+  "version": "0.1.0",
+  "license": "proprietary",
+  "require": {
+    "php": "~8.3.0||~8.4.0",
+    "magento/framework": "*",
+    "magento/module-catalog": "*",
+    "magento/module-checkout": "*",
+    "magento/module-customer": "*",
+    "magento/module-store": "*",
+    "tonyapps/module-b2b": "*"
+  },
+  "autoload": {
+    "files": ["registration.php"],
+    "psr-4": {"Tonyapps\\B2bQuickOrder\\": ""}
+  }
+}

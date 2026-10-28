@@ -1,0 +1,28 @@
+<?php
+/** @var \Magento\Framework\View\Element\Template $block */
+/** @var \Magento\Framework\Escaper $escaper */
+?>
+<div class="b2b-quick-order">
+    <p><?= $escaper->escapeHtml(__('Enter one SKU and quantity per line, or upload a CSV with sku and qty columns.')) ?></p>
+    <form action="<?= $escaper->escapeUrl($block->getUrl('b2bquickorder/order/add')) ?>" method="post" enctype="multipart/form-data">
+        <?= $block->getBlockHtml('formkey') ?>
+        <fieldset class="fieldset">
+            <div class="field items required">
+                <label class="label" for="quick-order-items"><span><?= $escaper->escapeHtml(__('SKUs and quantities')) ?></span></label>
+                <div class="control">
+                    <textarea id="quick-order-items" name="items" rows="10" placeholder="SKU-1001, 2&#10;SKU-1002, 1"></textarea>
+                </div>
+                <div class="note"><?= $escaper->escapeHtml(__('Use comma-separated SKU and quantity values. Example: SKU-1001, 2')) ?></div>
+            </div>
+            <div class="field import">
+                <label class="label" for="quick-order-csv"><span><?= $escaper->escapeHtml(__('Or upload a CSV')) ?></span></label>
+                <div class="control"><input id="quick-order-csv" type="file" name="import_file" accept=".csv,text/csv"/></div>
+                <div class="note"><?= $escaper->escapeHtml(__('CSV files can include a header row named sku,qty. Maximum 500 lines and 1 MB.')) ?></div>
+            </div>
+        </fieldset>
+        <div class="actions-toolbar">
+            <div class="primary"><button type="submit" class="action primary"><span><?= $escaper->escapeHtml(__('Add to Cart')) ?></span></button></div>
+            <div class="secondary"><button type="submit" name="return_to_cart" value="1" class="action secondary"><span><?= $escaper->escapeHtml(__('Add and View Cart')) ?></span></button></div>
+        </div>
+    </form>
+</div>
