@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace Tonyapps\B2bQuickOrder\Test\Unit\Model;
 
-use Magento\Catalog\Api\Data\ProductInterface;
-use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Type;
+use Magento\Catalog\Model\ResourceModel\Product\Collection;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Checkout\Model\Cart;
 use Magento\Framework\DataObject;
 use Magento\Quote\Model\Quote;
@@ -15,38 +16,42 @@ use Tonyapps\B2bQuickOrder\Model\QuickOrderService;
 
 class QuickOrderServiceTest extends TestCase
 {
-    private ProductRepositoryInterface&MockObject $productRepository;
+    private CollectionFactory&MockObject $collectionFactory;
+    private Collection&MockObject $collection;
     private Cart&MockObject $cart;
     private Quote&MockObject $quote;
     private QuickOrderService $service;
 
     protected function setUp(): void
     {
-        $this->productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $this->collection = $this->createMock(Collection::class);
+        foreach (['setStoreId', 'addStoreFilter', 'addAttributeToSelect', 'addAttributeToFilter', 'setFlag', 'addOptionsToResult'] as $method) {
+            $this->collection->method($method)->willReturnSelf();
+        }
+        $this->collectionFactory = $this->createMock(CollectionFactory::class);
+        $this->collectionFactory->method('create')->willReturn($this->collection);
         $this->quote = $this->getMockBuilder(Quote::class)->disableOriginalConstructor()->onlyMethods(['getStoreId'])->getMock();
         $this->quote->method('getStoreId')->willReturn(4);
         $this->cart = $this->getMockBuilder(Cart::class)->disableOriginalConstructor()->onlyMethods(['getQuote', 'addProduct', 'save'])->getMock();
         $this->cart->method('getQuote')->willReturn($this->quote);
-        $this->service = new QuickOrderService($this->productRepository, $this->cart);
+        $this->service = new QuickOrderService($this->collectionFactory, $this->cart);
     }
 
-    public function testAddsSupportedProductAndReportsUnsupportedType(): void
+    public function testLoadsAllSkusInOneCollectionAndReportsUnsupportedType(): void
     {
-        $simple = $this->createMock(ProductInterface::class);
-        $simple->method('getTypeId')->willReturn(Type::TYPE_SIMPLE);
-        $virtual = $this->createMock(ProductInterface::class);
-        $virtual->method('getTypeId')->willReturn(Type::TYPE_VIRTUAL);
-        $configurable = $this->createMock(ProductInterface::class);
-        $configurable->method('getTypeId')->willReturn('configurable');
-        $this->productRepository->expects(self::exactly(3))->method('get')->willReturnMap([
-            ['SKU-1', false, 4, $simple],
-            ['SKU-V', false, 4, $virtual],
-            ['SKU-2', false, 4, $configurable],
+        $this->collectionFactory->expects(self::once())->method('create');
+        $this->collection->expects(self::once())->method('setStoreId')->with(4)->willReturnSelf();
+        $this->collection->expects(self::once())->method('addAttributeToFilter')
+            ->with('sku', ['in' => ['SKU-1', 'sku-v', 'SKU-2']])->willReturnSelf();
+        $this->collection->method('getItems')->willReturn([
+            $this->product('SKU-1', Type::TYPE_SIMPLE),
+            $this->product('SKU-V', Type::TYPE_VIRTUAL),
+            $this->product('SKU-2', 'configurable'),
         ]);
         $addedTypes = [];
         $addedQuantities = [];
         $this->cart->expects(self::exactly(2))->method('addProduct')->willReturnCallback(
-            static function (ProductInterface $product, DataObject $request) use (&$addedTypes, &$addedQuantities): void {
+            static function (Product $product, DataObject $request) use (&$addedTypes, &$addedQuantities): void {
                 $addedTypes[] = $product->getTypeId();
                 $addedQuantities[] = (float)$request->getData('qty');
             }
@@ -55,7 +60,7 @@ class QuickOrderServiceTest extends TestCase
 
         $result = $this->service->addRows([
             ['sku' => 'SKU-1', 'qty' => 2.0, 'line' => 1],
-            ['sku' => 'SKU-V', 'qty' => 1.0, 'line' => 2],
+            ['sku' => 'sku-v', 'qty' => 1.0, 'line' => 2],
             ['sku' => 'SKU-2', 'qty' => 1.0, 'line' => 3],
         ]);
 
@@ -68,24 +73,31 @@ class QuickOrderServiceTest extends TestCase
 
     public function testUnavailableSkuDoesNotSaveTheCart(): void
     {
-        $this->productRepository->expects(self::once())->method('get')->with('MISSING', false, 4)
-            ->willThrowException(new \RuntimeException('not found'));
+        $this->collection->method('getItems')->willReturn([]);
         $this->cart->expects(self::never())->method('addProduct');
         $this->cart->expects(self::never())->method('save');
 
         $result = $this->service->addRows([['sku' => 'MISSING', 'qty' => 1.0, 'line' => 1]]);
 
         self::assertSame(0, $result['added']);
-        self::assertCount(1, $result['errors']);
+        self::assertSame(['Line 1: SKU "MISSING" was not found.'], $result['errors']);
     }
 
     public function testRejectsInvalidRowsBeforeLookingUpProducts(): void
     {
-        $this->productRepository->expects(self::never())->method('get');
+        $this->collectionFactory->expects(self::never())->method('create');
 
         $result = $this->service->addRows([['sku' => '', 'qty' => -1.0, 'line' => 5]]);
 
         self::assertSame(0, $result['added']);
         self::assertCount(1, $result['errors']);
+    }
+
+    private function product(string $sku, string $type): Product
+    {
+        $product = $this->getMockBuilder(Product::class)->disableOriginalConstructor()->onlyMethods(['getSku', 'getTypeId'])->getMock();
+        $product->method('getSku')->willReturn($sku);
+        $product->method('getTypeId')->willReturn($type);
+        return $product;
     }
 }

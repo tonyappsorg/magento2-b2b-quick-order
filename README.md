@@ -11,6 +11,12 @@ Optional SKU and CSV quick ordering for Tonyapps_B2b company accounts on Magento
 - Every line is added through Magento's cart model, which applies normal salability checks. Invalid lines are reported while valid lines are still added.
 - The normal cart and checkout remain in use, including Tonyapps_B2b payment restrictions and the optional B2B order approval module.
 
+## 2026-10-30 review fixes
+
+- The Quick Order page is excluded from the full page cache and shows the customer account menu.
+- All SKUs of a request are loaded with one product collection instead of one repository load per line. Unknown SKUs report `Line N: SKU "X" was not found.`
+- The CSV header accepts `quantity` as well as `qty` (case-insensitive, any column order), e.g. `SKU,Quantity`.
+
 ## Install
 
 Install `tonyapps/module-b2b-quick-order` with `tonyapps/module-b2b`, then run `bin/magento setup:upgrade`.

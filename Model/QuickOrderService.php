@@ -3,19 +3,16 @@ declare(strict_types=1);
 
 namespace Tonyapps\B2bQuickOrder\Model;
 
-use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Type;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Magento\Checkout\Model\Cart;
 use Magento\Framework\DataObject;
 
 class QuickOrderService
 {
-    /**
-     * @param ProductRepositoryInterface $productRepository
-     * @param Cart $cart
-     */
     public function __construct(
-        private readonly ProductRepositoryInterface $productRepository,
+        private readonly ProductCollectionFactory $productCollectionFactory,
         private readonly Cart $cart
     ) {
     }
@@ -32,6 +29,7 @@ class QuickOrderService
         $errors = [];
         $storeId = (int)$this->cart->getQuote()->getStoreId();
 
+        $valid = [];
         foreach (array_slice($rows, 0, CsvImporter::MAX_ROWS) as $row) {
             $sku = trim((string)($row['sku'] ?? ''));
             $qty = (float)($row['qty'] ?? 0);
@@ -40,17 +38,25 @@ class QuickOrderService
                 $errors[] = (string)__('Line %1: invalid SKU or quantity.', $line ?: '?');
                 continue;
             }
+            $valid[] = [$sku, $qty, $line ?: '?'];
+        }
+        $products = $valid ? $this->loadProducts(array_column($valid, 0), $storeId) : [];
 
+        foreach ($valid as [$sku, $qty, $line]) {
+            $product = $products[strtolower($sku)] ?? null;
+            if ($product === null) {
+                $errors[] = (string)__('Line %1: SKU "%2" was not found.', $line, $sku);
+                continue;
+            }
+            if (!in_array($product->getTypeId(), [Type::TYPE_SIMPLE, Type::TYPE_VIRTUAL], true)) {
+                $errors[] = (string)__('Line %1: SKU "%2" is not a supported simple or virtual product.', $line, $sku);
+                continue;
+            }
             try {
-                $product = $this->productRepository->get($sku, false, $storeId);
-                if (!in_array($product->getTypeId(), [Type::TYPE_SIMPLE, Type::TYPE_VIRTUAL], true)) {
-                    $errors[] = (string)__('Line %1: SKU "%2" is not a supported simple or virtual product.', $line ?: '?', $sku);
-                    continue;
-                }
                 $this->cart->addProduct($product, new DataObject(['qty' => $qty]));
                 $added++;
             } catch (\Exception $exception) {
-                $errors[] = (string)__('Line %1: could not add SKU "%2": %3', $line ?: '?', $sku, $exception->getMessage());
+                $errors[] = (string)__('Line %1: could not add SKU "%2": %3', $line, $sku, $exception->getMessage());
             }
         }
 
@@ -64,5 +70,30 @@ class QuickOrderService
         }
 
         return ['added' => $added, 'errors' => $errors];
+    }
+
+    /**
+     * One collection load for all SKUs instead of one repository load per line. Loaded the way the
+     * quote's own item collection loads cart products (store scope, custom options, no stock filter,
+     * so out-of-stock lines get Magento's stock error rather than "not found").
+     *
+     * @param string[] $skus
+     * @return array<string, Product> keyed by lower-cased SKU
+     */
+    private function loadProducts(array $skus, int $storeId): array
+    {
+        $collection = $this->productCollectionFactory->create();
+        $collection->setStoreId($storeId)
+            ->addStoreFilter($storeId)
+            ->addAttributeToSelect('*')
+            ->addAttributeToFilter('sku', ['in' => array_values(array_unique($skus))])
+            ->setFlag('has_stock_status_filter', true);
+        $collection->addOptionsToResult();
+
+        $products = [];
+        foreach ($collection->getItems() as $product) {
+            $products[strtolower((string)$product->getSku())] = $product;
+        }
+        return $products;
     }
 }

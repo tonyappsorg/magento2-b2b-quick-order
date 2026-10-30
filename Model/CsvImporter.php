@@ -9,6 +9,7 @@ class CsvImporter
     public const MAX_ROWS = 500;
     public const MAX_QTY = 10000.0;
     public const MAX_BYTES = 1048576;
+    private const QTY_HEADERS = ['qty', 'quantity'];
 
     /**
      * @return array{rows: array<int, array{sku: string, qty: float, line: int}>, errors: string[]}
@@ -43,9 +44,10 @@ class CsvImporter
             if (!$headerChecked) {
                 $headerChecked = true;
                 $header = array_map(static fn(string $value): string => strtolower($value), $columns);
-                if (in_array('sku', $header, true) && in_array('qty', $header, true)) {
+                $headerQty = array_values(array_intersect($header, self::QTY_HEADERS));
+                if (in_array('sku', $header, true) && $headerQty) {
                     $skuColumn = (int)array_search('sku', $header, true);
-                    $qtyColumn = (int)array_search('qty', $header, true);
+                    $qtyColumn = (int)array_search($headerQty[0], $header, true);
                     continue;
                 }
             }

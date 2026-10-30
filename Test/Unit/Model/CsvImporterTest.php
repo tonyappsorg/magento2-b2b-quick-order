@@ -19,6 +19,14 @@ class CsvImporterTest extends TestCase
         ], $result['rows']);
     }
 
+    public function testAcceptsQuantityHeaderInAnyColumnOrder(): void
+    {
+        $result = (new CsvImporter())->parse("Quantity,SKU\n2,SKU-1\n");
+
+        self::assertSame([], $result['errors']);
+        self::assertSame([['sku' => 'SKU-1', 'qty' => 2.0, 'line' => 2]], $result['rows']);
+    }
+
     public function testParsesHeaderlessPastedRowsAndSkipsBlankLines(): void
     {
         $result = (new CsvImporter())->parse(" SKU-1 , 3 \n\nSKU-2,1\n");
