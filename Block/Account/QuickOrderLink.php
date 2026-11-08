@@ -3,13 +3,13 @@ declare(strict_types=1);
 
 namespace Tonyapps\B2bQuickOrder\Block\Account;
 
-use Magento\Framework\View\Element\Html\Link\Current;
+use Magento\Customer\Block\Account\SortLink;
 use Magento\Framework\App\DefaultPathInterface;
 use Magento\Framework\View\Element\Template\Context;
 use Tonyapps\B2b\Model\CompanyContext;
 use Tonyapps\B2b\Model\Permissions;
 
-class QuickOrderLink extends Current
+class QuickOrderLink extends SortLink
 {
     public function __construct(
         Context $context,
