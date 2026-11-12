@@ -1,26 +1,55 @@
-# Tonyapps_B2bQuickOrder
+# B2B Quick Order for Magento 2
 
-Optional SKU and CSV quick ordering for Tonyapps_B2b company accounts on Magento Open Source.
+Let business buyers fill a cart by SKU — typed in or uploaded as a CSV — instead of browsing product by product.
 
-## First release behavior
+Trade customers usually know exactly what they want and have the part numbers at hand. Magento Open Source has no
+bulk ordering by SKU (Quick Order is an Adobe Commerce B2B feature). This add-on for B2B
+Company Accounts (`tonyapps/module-b2b`) gives company members a Quick Order page that drops a whole
+order into the normal cart in one step.
 
-- Adds a **Quick Order** link to the customer account navigation for active B2B company members.
-- Buyers can paste SKU/quantity rows or upload a CSV containing `sku,qty` columns. Headerless two-column CSV is also accepted.
-- Up to 500 lines and 1 MB are accepted per request. Quantities must be positive and no greater than 10,000.
-- Simple and virtual products are supported. Configurable, bundle, grouped, downloadable, and products requiring custom option selection are not supported in this release.
-- Every line is added through Magento's cart model, which applies normal salability checks. Invalid lines are reported while valid lines are still added.
-- The normal cart and checkout remain in use, including Tonyapps_B2b payment restrictions and the optional B2B order approval module.
+## Features
 
-## 2026-10-30 review fixes
+- **Order by SKU** — paste one `SKU, quantity` pair per line.
+- **CSV upload** — upload a spreadsheet export with SKU and quantity columns; a header row (`sku,qty` or
+  `SKU,Quantity`, any column order) is optional.
+- **Large orders in one go** — up to 500 lines per submission.
+- **Nothing lost on a typo** — valid lines go into the cart even when other lines fail, and each failed line is
+  reported by line number (for example `Line 3: SKU "NOPE-123" was not found.`).
+- **Your normal checkout** — products land in the regular Magento cart, so prices, stock checks, company payment
+  rules and B2B Order Approval all apply as usual.
+- **Company members only** — the Quick Order link appears in the account menu only for members of an active company.
 
-- The Quick Order page is excluded from the full page cache and shows the customer account menu.
-- All SKUs of a request are loaded with one product collection instead of one repository load per line. Unknown SKUs report `Line N: SKU "X" was not found.`
-- The CSV header accepts `quantity` as well as `qty` (case-insensitive, any column order), e.g. `SKU,Quantity`.
+## How it works
 
-## Install
+A company member opens **Quick Order** in their customer account menu, types or pastes SKUs and quantities (or picks a
+CSV file) and clicks **Add to Cart** — or **Add and View Cart** to go straight to the cart. A message confirms how many
+lines were added and lists the lines that could not be.
 
-Install `tonyapps/module-b2b-quick-order` with `tonyapps/module-b2b`, then run `bin/magento setup:upgrade`.
+## Good to know
 
-## Tests
+- Only **simple and virtual products** can be ordered this way. Configurable, bundle, grouped and downloadable
+  products, and products that need custom options chosen, are not supported.
+- Limits per submission: 500 lines, 1 MB CSV file, quantities from above 0 up to 10,000 per line.
+- There is no admin configuration; the page is available whenever B2B Company Accounts is enabled.
 
-Run the focused unit suite from the Magento installation root with `vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist app/code/Tonyapps/B2bQuickOrder/Test/Unit`.
+## Requirements
+
+- Magento Open Source 2.4.8
+- PHP 8.3 or 8.4
+- `tonyapps/module-b2b` (B2B Company Accounts)
+
+## Installation
+
+```sh
+composer require tonyapps/module-b2b-quick-order
+bin/magento setup:upgrade
+```
+
+## Configuration
+
+No settings of its own. It follows **Stores › Configuration › Tonyapps › B2B Company Account › Enable B2B Company
+Accounts**.
+
+## For developers
+
+Architecture, decisions, data model and tests are in [AGENTS.md](AGENTS.md).
