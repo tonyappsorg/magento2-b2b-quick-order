@@ -5,7 +5,7 @@ Read this before changing the module. Workspace-wide rules are in ../AGENTS.md. 
 
 ## Status
 
-- First release built (`tonyapps/module-b2b-quick-order` v0.1.0, proprietary). Optional addon of `Tonyapps_B2b`.
+- First release built (`tonyapps/module-b2b-quick-order` v0.1.0, GPL-3.0-or-later). Optional addon of `Tonyapps_B2b`.
 - 2026-10-30 review fixes applied. E2E: `b2b-quick-order.spec.js` (5 tests, added 2026-11-09) in the workspace
   `../e2e/tests/` Playwright suite. WORKPLAN manual QA asks to re-check Quick Order prices/options with the new
   collection loading.
@@ -63,6 +63,8 @@ Unit tests: `Block/Account/QuickOrderLinkTest`, `Model/CsvImporterTest`, `Model/
 
 ## Change history
 
+- **2026-11-16** — Released as free software under GPL-3.0-or-later (owner decision): `LICENSE` added,
+  `composer.json` license changed from `proprietary`, License section in the README.
 ### 2026-10-30 review fixes
 - Quick Order page excluded from the full page cache and shows the customer account menu.
 - All SKUs of a request loaded with one product collection instead of one repository load per line. Unknown SKUs
