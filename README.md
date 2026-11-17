@@ -31,6 +31,7 @@ lines were added and lists the lines that could not be.
   products, and products that need custom options chosen, are not supported.
 - Limits per submission: 500 lines, 1 MB CSV file, quantities from above 0 up to 10,000 per line.
 - There is no admin configuration; the page is available whenever B2B Company Accounts is enabled.
+- The Quick Order account page supports Luma and Hyvä storefronts.
 
 ## Requirements
 

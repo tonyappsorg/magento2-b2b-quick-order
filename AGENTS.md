@@ -5,10 +5,11 @@ Read this before changing the module. Workspace-wide rules are in ../AGENTS.md. 
 
 ## Status
 
-- First release built (`tonyapps/module-b2b-quick-order` 1.0.0, GPL-3.0-or-later). Optional addon of `Tonyapps_B2b`.
+- Released as 1.0.1 (`tonyapps/module-b2b-quick-order`, GPL-3.0-or-later). Optional addon of `Tonyapps_B2b`.
 - 2026-10-30 review fixes applied. E2E: `b2b-quick-order.spec.js` (5 tests, added 2026-11-09) in the workspace
   `../e2e/tests/` Playwright suite. WORKPLAN manual QA asks to re-check Quick Order prices/options with the new
   collection loading.
+- **Hyvä storefront styling verified 2026-11-17:** form controls and both cart actions use Hyvä styles.
 
 ## Architecture
 
@@ -62,6 +63,9 @@ Unit tests: `Block/Account/QuickOrderLinkTest`, `Model/CsvImporterTest`, `Model/
 `View/AccountPageLayoutTest`. No integration tests. E2E: `../e2e/tests/b2b-quick-order.spec.js`.
 
 ## Change history
+
+- **2026-11-17 — Hyvä storefront styling:** Added Hyvä form, button and Tailwind source classes to the Quick Order page.
+  Covered by `../e2e/tests/hyva-b2b-styling.spec.js`.
 
 - **2026-11-16** — Released as free software under GPL-3.0-or-later (owner decision): `LICENSE` added,
   `composer.json` license changed from `proprietary`, License section in the README.
